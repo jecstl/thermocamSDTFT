@@ -14,7 +14,23 @@ int maxT=-10000;
 int minT =10000;
 int x=0;
 int y=0;
+String newFileName = "new.thc";
+char newFileNameChar[] = "new.thc";
 
+
+void createTemperatureFile(){
+	res=file.initFAT(); 
+	newFileName = String(random(10000,99999),DEC);
+        newFileName += ".thc";
+        newFileName.toCharArray(newFileNameChar,newFileName.length());
+	file.create(newFileNameChar);
+	res=file.openFile(newFileNameChar, FILEMODE_TEXT_WRITE);
+	if (res==NO_ERROR)
+	{		
+		file.writeLn("01234567890123452345678901234567890123456789012345");			
+		file.closeFile();
+	}
+}
 
 void setMaxMinT(){		
 	res=file.initFAT();
@@ -36,17 +52,15 @@ void setMaxMinT(){
 			}      
 			file.closeFile();
 		}    
-	} 
-	Serial.println(maxT,DEC); 
-	Serial.println(minT,DEC);   
+	} 	   
 }
 
 int convertTemperatureToColorPos(int temperature){
-    return map(temperature, minT, maxT, 0, 99); 
+	return map(temperature, minT, maxT, 0, 99); 
 }
 
 void drawPixelTemperature(int temperature, int x, int y){
-    pixelColorIndex = convertTemperatureToColorPos(temperature);     
+	pixelColorIndex = convertTemperatureToColorPos(temperature);     
 	myGLCD.setColor(gradientArray[pixelColorIndex][0], gradientArray[pixelColorIndex][1], gradientArray[pixelColorIndex][2]);
 	//myGLCD.drawPixel(x,y);
 	myGLCD.fillRect(x*5,y*5,x*5+5,y*5+5);
@@ -54,7 +68,7 @@ void drawPixelTemperature(int temperature, int x, int y){
 
 void drawResult(){	
 	int x=0;
-	int y=0;
+	int y=47;
 	res=file.initFAT();
 	if (file.exists("0.th"))
 	{  
@@ -69,9 +83,9 @@ void drawResult(){
 				{
 					temperature = atof((char*)textBuffer)*100;		  
 					drawPixelTemperature(temperature,x,y);
-					y++;
-					if(y>47) { x++; y=0; }     
-                    					
+					y--;
+					if(y<0) { x++; y=47; }     
+					
 				}        
 			}      
 			file.closeFile();
@@ -81,26 +95,20 @@ void drawResult(){
 
 
 void setup()
-{  
-  Serial.begin(19200);
-  myGLCD.InitLCD();
-  myGLCD.clrScr();     
-  myGLCD.setBackColor(0, 0, 0);
-  //myGLCD.setFont(SmallFont);  
-  
-  setMaxMinT();
-  drawResult();
-  Serial.println("hii");  
+{  	
+	randomSeed(analogRead(0));
+	myGLCD.InitLCD();
+	myGLCD.clrScr();     
+	myGLCD.setBackColor(0, 0, 0);	  
+
+	setMaxMinT();
+	drawResult();
+    createTemperatureFile();	
 }
 
 
 
 void loop()
 { 
-  
-  
-  //myGLCD.printNumI(dispx, 99, 16);
-  
-  //delay(500);
-  
+  delay(1000);
 }
