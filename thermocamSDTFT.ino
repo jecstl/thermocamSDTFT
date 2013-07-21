@@ -46,11 +46,14 @@ void makeNewFilename(){
 				newFileNameChars[5] = 'T';
 				newFileNameChars[6] = 'H';	
 				newFileNameChars[7] = 'C';
+				Serial.println(newFileNameChars);
 				
 			//}			
 			file.closeFile();
 		}		
 	}
+	
+	Serial.println(newFileNameChars);
 	
 	sdRes=file.initFAT(); 
 	if (file.exists("FILES.SYS")){
@@ -64,6 +67,7 @@ void makeNewFilename(){
 		file.writeLn(newFileNameIndexChars);		
 		file.closeFile();
 	}	
+	Serial.println(newFileNameChars);
 }
 
 
@@ -150,6 +154,7 @@ void saveTMP(){
 
 void setup()
 {  		
+    Serial.begin(19200);
 	myGLCD.InitLCD();
 	myGLCD.clrScr();     
 	myGLCD.setBackColor(0, 0, 0);	  
