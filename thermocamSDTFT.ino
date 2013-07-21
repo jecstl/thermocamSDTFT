@@ -9,8 +9,8 @@
 #include <EEPROM.h>
 
 //-----------------THC--------------------------------------------------------------------
-#define HORIZ_SERVO_PIN 6
-#define VERT_SERVO_PIN 7
+#define HORIZ_SERVO_PIN 8
+#define VERT_SERVO_PIN 9
 #define MIN_READ_WAIT 60
 #define SMB_READ    1
 #define SMB_WRITE   0
