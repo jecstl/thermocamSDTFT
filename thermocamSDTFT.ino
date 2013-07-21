@@ -22,20 +22,20 @@ int minT =10000;
 int x=0;
 int y=0;
 
-char newFileNameChars[] = "new.thc";
+char newFileNameChars[8];
 char currFileNameChars[] = "0.thc";
 
 void makeNewFilename(){
 	int newFileNameIndex = 1;
 	sdRes=file.initFAT();
-	if (file.exists("TEXTFILE.TXT"))
+	if (file.exists("FILES.SYS"))
 	{  
 		sdRes=file.openFile("FILES.SYS", FILEMODE_TEXT_READ);
 		if (sdRes==NO_ERROR)
 		{
 			sdResult=0;
-			while ((sdResult!=EOF) and (sdResult!=FILE_IS_EMPTY))
-			{
+			//while ((sdResult!=EOF) and (sdResult!=FILE_IS_EMPTY))
+			//{
 				sdResult=file.readLn(sdTextBuffer, 80);
 				newFileNameIndex += atoi(sdTextBuffer);					
 				newFileNameChars[0] = (newFileNameIndex/1000)%10 + '0'; 
@@ -47,7 +47,7 @@ void makeNewFilename(){
 				newFileNameChars[6] = 'H';	
 				newFileNameChars[7] = 'C';
 				
-			}			
+			//}			
 			file.closeFile();
 		}		
 	}
@@ -139,7 +139,8 @@ void saveTMP(){
 	sdRes=file.openFile(newFileNameChars, FILEMODE_TEXT_WRITE);
 	if (sdRes==NO_ERROR)
 	{    
-		file.writeLn("this is new another one");		
+	    file.writeLn(newFileNameChars);
+		file.writeLn("this is new another one");			
 		file.closeFile();
 	}	
    
