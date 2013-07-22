@@ -57,7 +57,7 @@ int getRawTemperature100(){
 	tempData = (tempData * tempFactor)-0.01;
 	
 	int celcius100 = (tempData - 273.15)*100;
-	delay(100);	
+	delay(50);	
 	return celcius100;
 }
 
@@ -67,7 +67,7 @@ void scan() {
 	int yInc = ((mud - bud) * 2) / (lines - 1);
 	int xPos = blr;
 	int xInc = ((blr - mlr) * 2) / (rows - 1);
-	
+	count = 0;
 	sdRes=file.initFAT();
 	if (file.exists(newFileNameChars)) file.delFile(newFileNameChars);	
 	file.create(newFileNameChars);
@@ -79,6 +79,7 @@ void scan() {
 	for (int x = 0; x < rows; x++) { 	    
 		for (int y = 0; y < lines; y++) {
 			rawTemperaturesLine100[y]	= (int)getRawTemperature100();
+			count++;			
 			if (y != lines - 1) {
 				yPos += yInc;
 				ud.writeMicroseconds(yPos);        
@@ -113,8 +114,8 @@ void saveTemperaturePixelToSD(int *rawTemperaturesLine100, int length){
 	if (sdRes==NO_ERROR)
 	{   		
 		file.closeFile();
-	}	
-	myGLCD.print("saveTemperaturePixelToSD",CENTER, 144);
+	}		
+	myGLCD.printNumI(count,CENTER, 220);
 }
 
 
