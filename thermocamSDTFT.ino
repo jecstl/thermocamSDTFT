@@ -45,6 +45,7 @@ int renderMinT =10000;
 //-------------------------global--------------------------------------------------
 int stateMachine = 0; //0-main menu 1-scan 2-render 
 int prevStateMachine = -1;
+int buttonHome=0;
 int buttonScan = 0;
 int pressedButton = 0;
 ///////---------------------------------------------------------------------------------------------------------------
@@ -269,13 +270,12 @@ void renderResult(){
 
 void setup()
 {  	
-	i2c_init();	   
-	
+	i2c_init();	
 	myGLCD.InitLCD();
 	myGLCD.clrScr();
 	myTouch.InitTouch();
-	myTouch.setPrecision(PREC_MEDIUM);  
-	myButtons.setTextFont(BigFont);	
+	myTouch.setPrecision(PREC_MEDIUM); 
+    myButtons.setButtonColors(VGA_WHITE, VGA_GRAY, VGA_WHITE, VGA_RED, VGA_BLUE);	
 	ud.attach(VERT_SERVO_PIN); //Attach servos
 	lr.attach(HORIZ_SERVO_PIN); 
 	ud.writeMicroseconds(mud); //Move servos to middle position
@@ -285,8 +285,7 @@ void setup()
 
 
 void loop()
-{ 
-	myButtons.setButtonColors(VGA_WHITE, VGA_GRAY, VGA_WHITE, VGA_RED, VGA_BLUE); 
+{ 	 
 	if (myTouch.dataAvailable() == true)
 	{
 		pressedButton = myButtons.checkButtons();
@@ -294,31 +293,39 @@ void loop()
 		{
 			stateMachine = 1;
 		}
+		else if(pressedButton==buttonHome){
+			stateMachine = 0;
+		}
 	}
 	
 
 	//------------------ STATE MACHINE ---------------------------
 	if(prevStateMachine != stateMachine){
-		//MAIN MENU
+		myButtons.deleteAllButtons();
+		//HOME
 		if(0==stateMachine){
-			buttonScan = myButtons.addButton( 10,  10, 300,  30, "SCAN");
-			myButtons.drawButtons();
 			prevStateMachine = stateMachine;
+			myButtons.setTextFont(BigFont);
+			buttonScan = myButtons.addButton( 10,  10, 300,  30, "SCAN");
+			myButtons.drawButtons();			
 		}
 		//SCAN
 		else if(1==stateMachine){
+			prevStateMachine = stateMachine;
 			makeNewFilename();	
 			delay(500);	
 			scan();
 			strcpy(currFileNameChars,newFileNameChars);
-			stateMachine = 2;
-			prevStateMachine = stateMachine;
+			stateMachine = 2;			
 		}
 		//RENDER
 		else if(2==stateMachine){
+			prevStateMachine = stateMachine;
 			renderFindMaxMinT();
 			renderResult();	
-			prevStateMachine = stateMachine;		
+			myButtons.setTextFont(SmallFont);
+			buttonHome = myButtons.addButton( 0,  0, 8,  12, "M");
+			myButtons.drawButtons();		
 		}
 	}
 }
