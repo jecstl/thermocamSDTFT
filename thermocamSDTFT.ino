@@ -66,20 +66,21 @@ void scan() {
 	int xPos = blr;
 	int xInc = ((blr - mlr) * 2) / (rows - 1);
 	currScanX = 0;	
-	myGLCD.fillScr(VGA_SILVER);
-	myGLCD.setBackColor(VGA_SILVER);
-	myGLCD.setColor(VGA_BLACK);	
-	myGLCD.setFont(BigFont);
-	myGLCD.print("SCAN START",CENTER,34);
 	
 	sdRes=file.initFAT();
 	if (file.exists(newFileNameChars)) file.delFile(newFileNameChars);	
 	file.create(newFileNameChars);
-	delay(100);  
-	myGLCD.print(newFileNameChars,CENTER, 146);
+	delay(100); 
+	
+	myGLCD.fillScr(VGA_SILVER);
+	myGLCD.setBackColor(VGA_SILVER);
+	myGLCD.setColor(VGA_BLACK);	
+	myGLCD.setFont(BigFont);
+	myGLCD.print("SCAN START...",CENTER,10);
+	myGLCD.print(newFileNameChars,CENTER, 128);
 	myGLCD.setColor(VGA_RED);		
-	myGLCD.fillRect(0,74,320,76);
-	myGLCD.fillRect(0,122,320,124);
+	myGLCD.fillRect(0,53,319,53);
+	myGLCD.fillRect(0,101,319,101);
 	
 	sdRes=file.openFile(newFileNameChars, FILEMODE_TEXT_WRITE);
 
@@ -115,7 +116,8 @@ void scan() {
 	myGLCD.setBackColor(VGA_SILVER);
 	myGLCD.setColor(VGA_BLACK);	
 	myGLCD.setFont(BigFont);
-	myGLCD.print("SCAN READY",CENTER, 190);
+	myGLCD.print("SCAN READY!",CENTER, 171);
+	myGLCD.print("RENDER START...",CENTER, 214);
 }
 
 
@@ -128,8 +130,8 @@ void saveTemperaturePixelToSD(int *rawTemperaturesLine100, int length){
 			file.writeLn(temperatureChars);              		
 		}       
 	}	
-	myGLCD.setColor(255,0,0);		
-	myGLCD.fillRect(0,74,currScanX*5,122);
+	myGLCD.setColor(VGA_RED);		
+	myGLCD.fillRect(0,74,currScanX*5+4,122);
 }
 
 
@@ -191,13 +193,14 @@ void renderFindMaxMinT(){
 				sdResult=file.readLn(sdTextBuffer, 32);
 				if (sdResult!=FILE_IS_EMPTY)
 				{
-					renderTemperature = atoi((char*)sdTextBuffer);		  
-					if(renderMaxT < renderTemperature){ 
-						renderMaxT = renderTemperature; 
-					}
-					if(renderMinT > renderTemperature){ 
-						renderMinT = renderTemperature; 
-					}           
+					renderTemperature = atoi(sdTextBuffer);	
+					if(renderTemperature != 0){					
+						if(renderMaxT < renderTemperature){ 
+							renderMaxT = renderTemperature; 
+						}
+						if(renderMinT > renderTemperature){ 
+							renderMinT = renderTemperature; 
+						}   }        
 				}        
 			}      
 			file.closeFile();
@@ -240,8 +243,7 @@ void renderResult(){
 					if(y<0) { 
 						x++; 
 						y=47; 
-					}     
-
+					}
 				}        
 			}      
 			file.closeFile();
@@ -250,15 +252,15 @@ void renderResult(){
 	myGLCD.setBackColor(VGA_SILVER);
 	myGLCD.setColor(VGA_BLACK);	
 	myGLCD.setFont(SmallFont);	
-	myGLCD.printNumF(renderMinT/100,2,CENTER, 10);
-	myGLCD.print(currFileNameChars,CENTER, 226);
-	myGLCD.printNumF(renderMaxT/100,2,CENTER, 290);
+	myGLCD.printNumF(renderMinT/100,2,10, 226);
+	myGLCD.print(currFileNameChars,140, 226);
+	myGLCD.printNumF(renderMaxT/100,2,250, 226);
 	
 }
 
 void setup()
 {  	
-    i2c_init();	   
+	i2c_init();	   
 	
 	myGLCD.InitLCD();
 	myGLCD.clrScr();
