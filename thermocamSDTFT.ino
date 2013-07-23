@@ -15,7 +15,7 @@ int dev = 0x5A<<1;
 int data_low = 0;
 int data_high = 0;
 int pec = 0;
-long int count = 0;
+int currScanX = 0;
 int mlr = 1275; //Middle point for LR Servo; only used if there is no existing calibration
 int mud = 1750; //Middle point for UD Servo; only used if there is no existing calibration
 int blr = 1600; //Left-Bottom point for LR Servo; only used if there is no existing calibration
@@ -29,6 +29,7 @@ Servo ud; //Servo for up-down movement
 UTFT        myGLCD(TFT01_32,38,39,40,41); 
 byte gradientArray[101][3] = {{ 5, 5, 190 },{ 13, 2, 178 },{ 14, 0, 175 },{ 18, 0, 172 },{ 22, 0, 169 },{ 26, 0, 166 },{ 30, 0, 163 },{ 35, 0, 160 },{ 40, 0, 156 },{ 45, 0, 152 },{ 51, 0, 149 },{ 56, 0, 144 },{ 62, 0, 140 },{ 68, 0, 136 },{ 75, 0, 131 },{ 81, 0, 126 },{ 88, 0, 122 },{ 94, 0, 117 },{ 101, 0, 112 },{ 108, 0, 107 },{ 114, 0, 102 },{ 121, 0, 97 },{ 128, 0, 92 },{ 135, 0, 87 },{ 141, 0, 83 },{ 147, 0, 79 },{ 152, 0, 75 },{ 158, 0, 70 },{ 164, 0, 66 },{ 170, 0, 62 },{ 175, 0, 58 },{ 181, 0, 54 },{ 186, 0, 50 },{ 192, 0, 46 },{ 197, 0, 42 },{ 202, 0, 38 },{ 207, 0, 35 },{ 212, 0, 31 },{ 217, 0, 28 },{ 221, 0, 24 },{ 226, 0, 21 },{ 230, 0, 18 },{ 234, 0, 15 },{ 238, 0, 12 },{ 242, 0, 10 },{ 245, 0, 7 },{ 248, 0, 5 },{ 251, 0, 3 },{ 254, 0, 1 },{ 255, 1, 0 },{ 255, 3, 0 },{ 255, 5, 0 },{ 255, 8, 0 },{ 255, 10, 0 },{ 255, 13, 0 },{ 255, 16, 0 },{ 255, 19, 0 },{ 255, 22, 0 },{ 255, 25, 0 },{ 255, 28, 0 },{ 255, 32, 0 },{ 255, 35, 0 },{ 255, 39, 0 },{ 255, 43, 0 },{ 255, 46, 0 },{ 255, 51, 0 },{ 255, 55, 0 },{ 255, 59, 0 },{ 255, 63, 0 },{ 255, 67, 0 },{ 255, 72, 0 },{ 255, 76, 0 },{ 255, 80, 0 },{ 255, 85, 0 },{ 255, 90, 0 },{ 255, 94, 0 },{ 255, 99, 0 },{ 255, 103, 0 },{ 255, 108, 0 },{ 255, 113, 0 },{ 255, 118, 0 },{ 255, 122, 0 },{ 255, 128, 0 },{ 255, 136, 0 },{ 255, 145, 0 },{ 255, 153, 0 },{ 255, 161, 0 },{ 255, 170, 0 },{ 255, 178, 0 },{ 255, 185, 0 },{ 255, 193, 0 },{ 255, 200, 0 },{ 255, 207, 0 },{ 255, 214, 0 },{ 255, 220, 0 },{ 255, 227, 0 },{ 255, 232, 0 },{ 255, 237, 0 },{ 255, 242, 0 },{ 255, 247, 0 }, { 255, 252, 17 } };
 extern uint8_t SmallFont[];
+extern uint8_t BigFont[];
 //--------------------------SD--------------------------------------------------
 byte sdRes;
 word sdResult;
@@ -67,19 +68,25 @@ void scan() {
 	int yInc = ((mud - bud) * 2) / (lines - 1);
 	int xPos = blr;
 	int xInc = ((blr - mlr) * 2) / (rows - 1);
-	count = 0;
+    currScanX = 0;	
+	myGLCD.fillScr(VGA_SILVER);
+	myGLCD.setColor(255,0,0);	
+	myGLCD.setFont(BigFont);
+	myGLCD.print("SCAN START",CENTER,2);
+	
 	sdRes=file.initFAT();
 	if (file.exists(newFileNameChars)) file.delFile(newFileNameChars);	
 	file.create(newFileNameChars);
 	delay(100);  
-	myGLCD.print(newFileNameChars,CENTER, 184);
+	myGLCD.print(newFileNameChars,CENTER, 80);
+	sdRes=file.openFile(newFileNameChars, FILEMODE_TEXT_WRITE);
 
 	ud.writeMicroseconds(yPos);
 	lr.writeMicroseconds(xPos);
 	for (int x = 0; x < rows; x++) { 	    
 		for (int y = 0; y < lines; y++) {
 			rawTemperaturesLine100[y]	= (int)getRawTemperature100();
-			count++;			
+						
 			if (y != lines - 1) {
 				yPos += yInc;
 				ud.writeMicroseconds(yPos);        
@@ -97,25 +104,27 @@ void scan() {
 			delay(2);
 		}    
 		saveTemperaturePixelToSD(rawTemperaturesLine100, lines);
+		currScanX++;
 	}  
+	if (sdRes==NO_ERROR)
+	{   		
+		file.closeFile();
+	}
+	myGLCD.print("SCAN READY",CENTER, 140);
 }
 
 
 void saveTemperaturePixelToSD(int *rawTemperaturesLine100, int length){	
 	char temperatureChars[16];      	
-	sdRes=file.openFile(newFileNameChars, FILEMODE_TEXT_WRITE);
 	for (int idx = 0; idx < length; idx++) {
 		itoa(rawTemperaturesLine100[idx],temperatureChars,DEC);    
 		if (sdRes==NO_ERROR)
 		{    
-			file.writeLn(temperatureChars);      		
+			file.writeLn(temperatureChars);              		
 		}       
 	}	
-	if (sdRes==NO_ERROR)
-	{   		
-		file.closeFile();
-	}		
-	myGLCD.printNumI(count,CENTER, 220);
+	myGLCD.setColor(255,0,0);		
+	myGLCD.fillRect(0,30,currScanX*5,50);
 }
 
 
@@ -234,9 +243,7 @@ void renderResult(){
 void setup()
 {  		   
 	myGLCD.InitLCD();
-	myGLCD.clrScr();     
-	myGLCD.setBackColor(0, 0, 0);	  
-	myGLCD.setFont(SmallFont);
+	myGLCD.clrScr();
 
 	i2c_init();
 	ud.attach(VERT_SERVO_PIN); //Attach servos
@@ -246,11 +253,8 @@ void setup()
 
 	//main process
 	makeNewFilename();	
-	delay(500);
-	myGLCD.setColor(240,240,240);	
-	myGLCD.print("begin scan",CENTER, 54);
-	scan();  
-	myGLCD.print("end scan",CENTER, 74);
+	delay(500);	
+	scan();  	
 	strcpy(currFileNameChars,newFileNameChars);	
 	renderFindMaxMinT();
 	renderResult();		
