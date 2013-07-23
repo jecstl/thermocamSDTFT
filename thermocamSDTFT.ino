@@ -33,12 +33,9 @@ extern uint8_t BigFont[];
 //--------------------------SD--------------------------------------------------
 byte sdRes;
 word sdResult;
-char sdTextBuffer[81];
 char newFileNameChars[] = "T999.THC";
 char currFileNameChars[] = "T999.THC";
 //-------------------------render-------------------------------------------------
-int renderTemperature;
-int renderPixelColorIndex;
 int renderMaxT=-10000;
 int renderMinT =10000;
 ///////---------------------------------------------------------------------------------------------------------------
@@ -68,17 +65,22 @@ void scan() {
 	int yInc = ((mud - bud) * 2) / (lines - 1);
 	int xPos = blr;
 	int xInc = ((blr - mlr) * 2) / (rows - 1);
-    currScanX = 0;	
+	currScanX = 0;	
 	myGLCD.fillScr(VGA_SILVER);
-	myGLCD.setColor(255,0,0);	
+	myGLCD.setBackColor(VGA_SILVER);
+	myGLCD.setColor(VGA_BLACK);	
 	myGLCD.setFont(BigFont);
-	myGLCD.print("SCAN START",CENTER,2);
+	myGLCD.print("SCAN START",CENTER,34);
 	
 	sdRes=file.initFAT();
 	if (file.exists(newFileNameChars)) file.delFile(newFileNameChars);	
 	file.create(newFileNameChars);
 	delay(100);  
-	myGLCD.print(newFileNameChars,CENTER, 80);
+	myGLCD.print(newFileNameChars,CENTER, 146);
+	myGLCD.setColor(VGA_RED);		
+	myGLCD.fillRect(0,74,320,76);
+	myGLCD.fillRect(0,122,320,124);
+	
 	sdRes=file.openFile(newFileNameChars, FILEMODE_TEXT_WRITE);
 
 	ud.writeMicroseconds(yPos);
@@ -86,7 +88,7 @@ void scan() {
 	for (int x = 0; x < rows; x++) { 	    
 		for (int y = 0; y < lines; y++) {
 			rawTemperaturesLine100[y]	= (int)getRawTemperature100();
-						
+			
 			if (y != lines - 1) {
 				yPos += yInc;
 				ud.writeMicroseconds(yPos);        
@@ -110,7 +112,10 @@ void scan() {
 	{   		
 		file.closeFile();
 	}
-	myGLCD.print("SCAN READY",CENTER, 140);
+	myGLCD.setBackColor(VGA_SILVER);
+	myGLCD.setColor(VGA_BLACK);	
+	myGLCD.setFont(BigFont);
+	myGLCD.print("SCAN READY",CENTER, 190);
 }
 
 
@@ -124,13 +129,14 @@ void saveTemperaturePixelToSD(int *rawTemperaturesLine100, int length){
 		}       
 	}	
 	myGLCD.setColor(255,0,0);		
-	myGLCD.fillRect(0,30,currScanX*5,50);
+	myGLCD.fillRect(0,74,currScanX*5,122);
 }
 
 
 
 void makeNewFilename(){
 	int newFileNameIndex = 1;
+	char sdTextBuffer[32];
 	sdRes=file.initFAT();
 	if (file.exists("FILES.SYS"))
 	{  
@@ -139,7 +145,7 @@ void makeNewFilename(){
 		{
 			sdResult=0;
 			//while ((sdResult!=EOF) and (sdResult!=FILE_IS_EMPTY)) {
-			sdResult=file.readLn(sdTextBuffer, 80);
+			sdResult=file.readLn(sdTextBuffer, 32);
 			newFileNameIndex += atoi(sdTextBuffer);				
 			newFileNameChars[0] = 'T'; //(newFileNameIndex/1000)%10 + '0'; 
 			newFileNameChars[1] = (newFileNameIndex/100)%10 + '0'; 
@@ -170,7 +176,9 @@ void makeNewFilename(){
 
 
 
-void renderFindMaxMinT(){		
+void renderFindMaxMinT(){
+	char sdTextBuffer[32];		
+	int renderTemperature;
 	sdRes=file.initFAT();
 	if (file.exists(currFileNameChars))
 	{  
@@ -180,7 +188,7 @@ void renderFindMaxMinT(){
 			sdResult=0;
 			while ((sdResult!=EOF) and (sdResult!=FILE_IS_EMPTY))
 			{
-				sdResult=file.readLn(sdTextBuffer, 80);
+				sdResult=file.readLn(sdTextBuffer, 32);
 				if (sdResult!=FILE_IS_EMPTY)
 				{
 					renderTemperature = atoi((char*)sdTextBuffer);		  
@@ -202,6 +210,7 @@ int renderConvertTemperatureToColorPos(int renderTemperature){
 }
 
 void renderDrawPixelTemperature(int renderTemperature, int x, int y){
+	int renderPixelColorIndex;
 	renderPixelColorIndex = renderConvertTemperatureToColorPos(renderTemperature);     
 	myGLCD.setColor(gradientArray[renderPixelColorIndex][0], gradientArray[renderPixelColorIndex][1], gradientArray[renderPixelColorIndex][2]);
 	//myGLCD.drawPixel(x,y);
@@ -211,6 +220,8 @@ void renderDrawPixelTemperature(int renderTemperature, int x, int y){
 void renderResult(){	
 	int x=0;
 	int y=47;
+	int renderTemperature = 0;
+	char sdTextBuffer[32];
 	sdRes=file.initFAT();
 	if (file.exists(currFileNameChars))
 	{  
@@ -220,10 +231,10 @@ void renderResult(){
 			sdResult=0;
 			while ((sdResult!=EOF) and (sdResult!=FILE_IS_EMPTY))
 			{
-				sdResult=file.readLn(sdTextBuffer, 80);
+				sdResult=file.readLn(sdTextBuffer, 32);
 				if (sdResult!=FILE_IS_EMPTY)
 				{
-					renderTemperature = atof((char*)sdTextBuffer);		  
+					renderTemperature = atoi((char*)sdTextBuffer);		  
 					renderDrawPixelTemperature(renderTemperature,x,y);
 					y--;
 					if(y<0) { 
@@ -236,16 +247,22 @@ void renderResult(){
 			file.closeFile();
 		}    
 	}
-	myGLCD.setColor(240,240,240);	
-	myGLCD.print(currFileNameChars,CENTER, 228);
+	myGLCD.setBackColor(VGA_SILVER);
+	myGLCD.setColor(VGA_BLACK);	
+	myGLCD.setFont(SmallFont);	
+	myGLCD.printNumF(renderMinT/100,2,CENTER, 10);
+	myGLCD.print(currFileNameChars,CENTER, 226);
+	myGLCD.printNumF(renderMaxT/100,2,CENTER, 290);
+	
 }
 
 void setup()
-{  		   
+{  	
+    i2c_init();	   
+	
 	myGLCD.InitLCD();
 	myGLCD.clrScr();
-
-	i2c_init();
+	
 	ud.attach(VERT_SERVO_PIN); //Attach servos
 	lr.attach(HORIZ_SERVO_PIN); 
 	ud.writeMicroseconds(mud); //Move servos to middle position
