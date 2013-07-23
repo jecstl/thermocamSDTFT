@@ -273,9 +273,10 @@ void setup()
 	i2c_init();	
 	myGLCD.InitLCD();
 	myGLCD.clrScr();
+	myGLCD.setBackColor(VGA_SILVER);
 	myTouch.InitTouch();
 	myTouch.setPrecision(PREC_MEDIUM); 
-    myButtons.setButtonColors(VGA_WHITE, VGA_GRAY, VGA_WHITE, VGA_RED, VGA_BLUE);	
+    myButtons.setButtonColors(VGA_WHITE, VGA_GRAY, VGA_WHITE, VGA_RED, VGA_BLACK);	
 	ud.attach(VERT_SERVO_PIN); //Attach servos
 	lr.attach(HORIZ_SERVO_PIN); 
 	ud.writeMicroseconds(mud); //Move servos to middle position
@@ -301,13 +302,14 @@ void loop()
 
 	//------------------ STATE MACHINE ---------------------------
 	if(prevStateMachine != stateMachine){
-		myButtons.deleteAllButtons();
+	    myButtons.setTextFont(BigFont);
+	    buttonScan = myButtons.addButton( 10,  10, 300,  30, "SCAN");
+		myButtons.setTextFont(SmallFont);
+		buttonHome = myButtons.addButton( 0,  0, 12,  12, "^");
 		//HOME
 		if(0==stateMachine){
-			prevStateMachine = stateMachine;
-			myButtons.setTextFont(BigFont);
-			buttonScan = myButtons.addButton( 10,  10, 300,  30, "SCAN");
-			myButtons.drawButtons();			
+			prevStateMachine = stateMachine;			
+			myButtons.drawButton(buttonScan);			
 		}
 		//SCAN
 		else if(1==stateMachine){
@@ -323,10 +325,9 @@ void loop()
 			prevStateMachine = stateMachine;
 			renderFindMaxMinT();
 			renderResult();	
-			myButtons.setTextFont(SmallFont);
-			buttonHome = myButtons.addButton( 0,  0, 8,  12, "M");
-			myButtons.drawButtons();		
+            myButtons.drawButton(buttonHome);			
 		}
+		
 	}
 }
 
