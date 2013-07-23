@@ -80,13 +80,11 @@ void scan() {
 	sdRes=file.initFAT();
 	if (file.exists(newFileNameChars)) file.delFile(newFileNameChars);	
 	file.create(newFileNameChars);
-	delay(100); 
+	delay(100); 	
 	
-	myGLCD.fillScr(VGA_SILVER);
 	myGLCD.setBackColor(VGA_SILVER);
 	myGLCD.setColor(VGA_BLACK);	
-	myGLCD.setFont(BigFont);
-	myGLCD.print("SCAN START",CENTER,10);
+	myGLCD.setFont(BigFont);	
 	myGLCD.print(newFileNameChars,CENTER, 128);
 	myGLCD.setColor(VGA_RED);		
 	myGLCD.fillRect(0,53,319,53);
@@ -122,12 +120,8 @@ void scan() {
 	if (sdRes==NO_ERROR)
 	{   		
 		file.closeFile();
-	}
-	myGLCD.setBackColor(VGA_SILVER);
-	myGLCD.setColor(VGA_BLACK);	
-	myGLCD.setFont(BigFont);
-	myGLCD.print("SCAN READY",CENTER, 171);
-	myGLCD.print("RENDER START",CENTER, 214);
+	}	
+	
 }
 
 
@@ -316,15 +310,24 @@ void loop()
 		//SCAN
 		else if(1==stateMachine){
 			prevStateMachine = stateMachine;
+			myGLCD.setBackColor(VGA_SILVER);
+			myGLCD.setColor(VGA_BLACK);	
+			myGLCD.setFont(BigFont);
+			myGLCD.print("SCAN START",CENTER,10);
 			makeNewFilename();	
 			delay(500);	
 			scan();
 			strcpy(currFileNameChars,newFileNameChars);
-			stateMachine = 2;			
+			stateMachine = 2;	            	
+            myGLCD.print("SCAN READY",CENTER, 171);				
 		}
 		//RENDER
 		else if(2==stateMachine){
 			prevStateMachine = stateMachine;
+			myGLCD.setBackColor(VGA_SILVER);
+			myGLCD.setColor(VGA_BLACK);	
+			myGLCD.setFont(BigFont);	
+			myGLCD.print("RENDER START",CENTER, 10);
 			renderFindMaxMinT();
 			renderResult();	
 			myButtons.drawButton(buttonHome);			
