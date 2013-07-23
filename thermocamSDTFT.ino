@@ -1,6 +1,8 @@
 #include <tinyFAT.h>
 #include <UTFT.h>
 #include <UTFT_tinyFAT.h>
+#include <UTouch.h>
+#include <UTFT_Buttons.h>
 #include <i2cmaster.h>
 #include <Servo.h>
 
@@ -27,6 +29,8 @@ Servo lr; //Servo for left-right movement
 Servo ud; //Servo for up-down movement
 //-------------------------TFT-------------------------------------------------
 UTFT        myGLCD(TFT01_32,38,39,40,41); 
+UTouch        myTouch(6,5,4,3,2);
+UTFT_Buttons  myButtons(&myGLCD, &myTouch);
 byte gradientArray[101][3] = {{ 5, 5, 190 },{ 13, 2, 178 },{ 14, 0, 175 },{ 18, 0, 172 },{ 22, 0, 169 },{ 26, 0, 166 },{ 30, 0, 163 },{ 35, 0, 160 },{ 40, 0, 156 },{ 45, 0, 152 },{ 51, 0, 149 },{ 56, 0, 144 },{ 62, 0, 140 },{ 68, 0, 136 },{ 75, 0, 131 },{ 81, 0, 126 },{ 88, 0, 122 },{ 94, 0, 117 },{ 101, 0, 112 },{ 108, 0, 107 },{ 114, 0, 102 },{ 121, 0, 97 },{ 128, 0, 92 },{ 135, 0, 87 },{ 141, 0, 83 },{ 147, 0, 79 },{ 152, 0, 75 },{ 158, 0, 70 },{ 164, 0, 66 },{ 170, 0, 62 },{ 175, 0, 58 },{ 181, 0, 54 },{ 186, 0, 50 },{ 192, 0, 46 },{ 197, 0, 42 },{ 202, 0, 38 },{ 207, 0, 35 },{ 212, 0, 31 },{ 217, 0, 28 },{ 221, 0, 24 },{ 226, 0, 21 },{ 230, 0, 18 },{ 234, 0, 15 },{ 238, 0, 12 },{ 242, 0, 10 },{ 245, 0, 7 },{ 248, 0, 5 },{ 251, 0, 3 },{ 254, 0, 1 },{ 255, 1, 0 },{ 255, 3, 0 },{ 255, 5, 0 },{ 255, 8, 0 },{ 255, 10, 0 },{ 255, 13, 0 },{ 255, 16, 0 },{ 255, 19, 0 },{ 255, 22, 0 },{ 255, 25, 0 },{ 255, 28, 0 },{ 255, 32, 0 },{ 255, 35, 0 },{ 255, 39, 0 },{ 255, 43, 0 },{ 255, 46, 0 },{ 255, 51, 0 },{ 255, 55, 0 },{ 255, 59, 0 },{ 255, 63, 0 },{ 255, 67, 0 },{ 255, 72, 0 },{ 255, 76, 0 },{ 255, 80, 0 },{ 255, 85, 0 },{ 255, 90, 0 },{ 255, 94, 0 },{ 255, 99, 0 },{ 255, 103, 0 },{ 255, 108, 0 },{ 255, 113, 0 },{ 255, 118, 0 },{ 255, 122, 0 },{ 255, 128, 0 },{ 255, 136, 0 },{ 255, 145, 0 },{ 255, 153, 0 },{ 255, 161, 0 },{ 255, 170, 0 },{ 255, 178, 0 },{ 255, 185, 0 },{ 255, 193, 0 },{ 255, 200, 0 },{ 255, 207, 0 },{ 255, 214, 0 },{ 255, 220, 0 },{ 255, 227, 0 },{ 255, 232, 0 },{ 255, 237, 0 },{ 255, 242, 0 },{ 255, 247, 0 }, { 255, 252, 17 } };
 extern uint8_t SmallFont[];
 extern uint8_t BigFont[];
@@ -38,6 +42,11 @@ char currFileNameChars[] = "T999.THC";
 //-------------------------render-------------------------------------------------
 int renderMaxT=-10000;
 int renderMinT =10000;
+//-------------------------global--------------------------------------------------
+int stateMachine = 0; //0-main menu 1-scan 2-render 
+int prevStateMachine = -1;
+int buttonScan = 0;
+int pressedButton = 0;
 ///////---------------------------------------------------------------------------------------------------------------
 
 int getRawTemperature100(){
@@ -76,7 +85,7 @@ void scan() {
 	myGLCD.setBackColor(VGA_SILVER);
 	myGLCD.setColor(VGA_BLACK);	
 	myGLCD.setFont(BigFont);
-	myGLCD.print("SCAN START...",CENTER,10);
+	myGLCD.print("SCAN START",CENTER,10);
 	myGLCD.print(newFileNameChars,CENTER, 128);
 	myGLCD.setColor(VGA_RED);		
 	myGLCD.fillRect(0,53,319,53);
@@ -116,8 +125,8 @@ void scan() {
 	myGLCD.setBackColor(VGA_SILVER);
 	myGLCD.setColor(VGA_BLACK);	
 	myGLCD.setFont(BigFont);
-	myGLCD.print("SCAN READY!",CENTER, 171);
-	myGLCD.print("RENDER START...",CENTER, 214);
+	myGLCD.print("SCAN READY",CENTER, 171);
+	myGLCD.print("RENDER START",CENTER, 214);
 }
 
 
@@ -131,7 +140,7 @@ void saveTemperaturePixelToSD(int *rawTemperaturesLine100, int length){
 		}       
 	}	
 	myGLCD.setColor(VGA_RED);		
-	myGLCD.fillRect(0,74,currScanX*5+4,122);
+	myGLCD.fillRect(0,53,currScanX*5+4,101);
 }
 
 
@@ -249,7 +258,7 @@ void renderResult(){
 			file.closeFile();
 		}    
 	}
-	myGLCD.setBackColor(VGA_SILVER);
+	myGLCD.setBackColor(VGA_WHITE);
 	myGLCD.setColor(VGA_BLACK);	
 	myGLCD.setFont(SmallFont);	
 	myGLCD.printNumF(renderMinT/100,2,10, 226);
@@ -264,25 +273,53 @@ void setup()
 	
 	myGLCD.InitLCD();
 	myGLCD.clrScr();
-	
+	myTouch.InitTouch();
+	myTouch.setPrecision(PREC_MEDIUM);  
+	myButtons.setTextFont(BigFont);	
 	ud.attach(VERT_SERVO_PIN); //Attach servos
 	lr.attach(HORIZ_SERVO_PIN); 
 	ud.writeMicroseconds(mud); //Move servos to middle position
-	lr.writeMicroseconds(mlr);
-
-	//main process
-	makeNewFilename();	
-	delay(500);	
-	scan();  	
-	strcpy(currFileNameChars,newFileNameChars);	
-	renderFindMaxMinT();
-	renderResult();		
+	lr.writeMicroseconds(mlr);	
 }
 
 
 
 void loop()
 { 
-	//delay(1000);
+	myButtons.setButtonColors(VGA_WHITE, VGA_GRAY, VGA_WHITE, VGA_RED, VGA_BLUE); 
+	if (myTouch.dataAvailable() == true)
+	{
+		pressedButton = myButtons.checkButtons();
+		if (pressedButton==buttonScan)
+		{
+			stateMachine = 1;
+		}
+	}
+	
+
+	//------------------ STATE MACHINE ---------------------------
+	if(prevStateMachine != stateMachine){
+		//MAIN MENU
+		if(0==stateMachine){
+			buttonScan = myButtons.addButton( 10,  10, 300,  30, "SCAN");
+			myButtons.drawButtons();
+			prevStateMachine = stateMachine;
+		}
+		//SCAN
+		else if(1==stateMachine){
+			makeNewFilename();	
+			delay(500);	
+			scan();
+			strcpy(currFileNameChars,newFileNameChars);
+			stateMachine = 2;
+			prevStateMachine = stateMachine;
+		}
+		//RENDER
+		else if(2==stateMachine){
+			renderFindMaxMinT();
+			renderResult();	
+			prevStateMachine = stateMachine;		
+		}
+	}
 }
 
