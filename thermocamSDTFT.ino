@@ -262,25 +262,24 @@ void renderResult(){
 	myGLCD.setBackColor(VGA_WHITE);
 	myGLCD.setColor(VGA_BLACK);	
 	myGLCD.setFont(SmallFont);	
-	myGLCD.printNumF(renderMinT/100,2,10, 226);
+	myGLCD.printNumF(renderMinT/100.0,2,10, 226);
 	myGLCD.print(currFileNameChars,140, 226);
-	myGLCD.printNumF(renderMaxT/100,2,250, 226);
+	myGLCD.printNumF(renderMaxT/100.0,2,250, 226);
 	
 }
 
 void setup()
 {  	
+    //Serial.begin(19200);
 	i2c_init();	
 	myGLCD.InitLCD();	
 	myTouch.InitTouch();
 	myTouch.setPrecision(PREC_MEDIUM); 
     myButtons.setButtonColors(VGA_WHITE, VGA_GRAY, VGA_WHITE, VGA_RED, VGA_BLACK);	
 	myButtons.setTextFont(BigFont);
-	buttonScan = myButtons.addButton( 10,  10, 300,  30, "SCAN");	
+	buttonScan = myButtons.addButton( 60,  30, 200,  30, "SCAN");	
 	myButtons.setTextFont(SmallFont);
-	buttonHome = myButtons.addButton( 0,  0, 10,  10, "^");
-	myGLCD.clrScr();
-	myGLCD.fillScr(VGA_SILVER);
+	buttonHome = myButtons.addButton( 303, 0, 16,  16, "X");	
 	ud.attach(VERT_SERVO_PIN); //Attach servos
 	lr.attach(HORIZ_SERVO_PIN); 
 	ud.writeMicroseconds(mud); //Move servos to middle position
@@ -305,7 +304,10 @@ void loop()
 	
 
 	//------------------ STATE MACHINE ---------------------------
-	if(prevStateMachine != stateMachine){		
+	if(prevStateMachine != stateMachine){	
+        //Serial.println(stateMachine,DEC);	
+		myGLCD.clrScr();
+		myGLCD.fillScr(VGA_SILVER);
 		//HOME
 		if(0==stateMachine){
 			prevStateMachine = stateMachine;			
